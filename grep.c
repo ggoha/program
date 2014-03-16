@@ -6,7 +6,6 @@
 #include <malloc.h>
 #include <dirent.h>
 #include <errno.h>
-
 #include <stdio.h>
 
 #define SUCCESS 0
@@ -36,7 +35,7 @@ void PrintError (char* error, char* path)
 	free(res);
 }
 
-
+//Извлекаем все -R если они есть
 int ProseccingInputDate(int* argc, char** argv)
 {
 	int i=1, count=0, recursive=0;	
@@ -75,9 +74,6 @@ int* prefix(char* s)
             ++k;
         pref[i] = k;
 	}
-	i=1;
-//    for (;i<strlen(s);++i)
-//		printf("%d ", pref[i]);
     return pref;
  }
 
@@ -121,15 +117,18 @@ int FindInFile(char* str, int* pref,  char* path)
 		buff[j]=0;
 	char* buffnew=buff+strlen(str);
 	int count_read;
+	//так как буфер конечной длины, то буферы накладываем друг на друга, чтобы поиск увенчался успехом
 	while((count_read = read (fd_open, buff+strlen(str), SIZE)) != 0)
 	{
 //		printf("%s\n!", buffnew);
 		char* res;
+		//поиск
 		while ((res=kmp(str, pref, buffnew))!=NULL)
 		{
 			printf("%s: %s\n", path, res);
 			buffnew=res+strlen(str);
 		}
+		//перекладывание пересечения буфера
 		if (count_read>strlen(str))
 		{
 			int j=1;
@@ -151,6 +150,7 @@ int FindInFile(char* str, int* pref,  char* path)
 		}
 		
 	}
+	return SUCCESS;
 }
 
 int FindInDirectoryRecursive(char* str, int* pref,  char* path)
@@ -201,8 +201,6 @@ int FindInDirectoryRecursive(char* str, int* pref,  char* path)
 		return ERCLOSED;
 	}
 	return SUCCESS;
-
-
 }
 
 int find(char* str, int* pref,  char* path, int recursive)
@@ -221,7 +219,7 @@ int find(char* str, int* pref,  char* path, int recursive)
 		}
 		else 
 		{
-			write(2, "Cann't find non-recursive \n", 37);
+			write(2, "Cann't find non-recursive \n", sizeof("Cann't find non-recursive \n"));
 			return ERRECURS;
 		}
 	}
@@ -237,7 +235,7 @@ int main (int argc, char *argv[])
 	int flagR = ProseccingInputDate(&argc, argv);
 	if (argc<3)
 	{
-			write(2, "Too fee arguments\n", 19);
+			write(2, "Too fee arguments\n", sizeof("Too fee arguments\n"));
 			return ERARGUMENTS;		
 	}
 	else

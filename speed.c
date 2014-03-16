@@ -10,6 +10,8 @@
 
 #define ERPIPE -1
 #define SUCSESS 0
+
+//Размер передаваемого единоразово
 const long long SIZE = 32000;
 
 struct timeval tv1,tv2,dtv;
@@ -46,7 +48,7 @@ int speedtest (void)
 	int descriptors[2];
 	if (pipe(descriptors))
 	{
-		perror("Pipe_error");
+		perror("Pipe_error: ");
 		return ERPIPE;
 	}
 	//форкаемся 	
@@ -63,35 +65,37 @@ int speedtest (void)
 			for (;k<SIZE; ++k)
 				buff[k]='0';
 			char* buff_new=buff;
+			//Размер тестового образца для замера скорости в char
 			long long sizebuff = 1000000000;
-			long long j=0;
+			long long position=0;
 			//начало замера времени
 			time_start();			
 			
 			//запись в pipe
-			while (j<sizebuff)
+			while (position<sizebuff)
 			{
 				long long size = min(SIZE,strlen(buff_new));
 				long long count_w;
-				while (j<sizebuff && (count_w=write(descriptors[1], buff_new, size))!=0)
+				while (position<sizebuff && (count_w=write(descriptors[1], buff_new, size))!=0)
 				{	
 //					printf("%Lf\n", (long double)(j)/sizebuff);
 					buff_new+=count_w;
 					size-=count_w;
-					j+=count_w;
+					position+=count_w;
 				}
-				j+=count_w;
+				position+=count_w;
 				buff_new=buff;
 			}
 			
 			printf("Time: %ld ms\n", time_stop());			
 			//Закрываемся
+			free(buff);
 			close(descriptors[1]);
 			exit(SUCSESS);
 		}
 		case -1:
 		{
-				perror("Error fork");
+				perror("Error fork: ");
 		}
 		default:
 		{
@@ -103,6 +107,7 @@ int speedtest (void)
 //				write(1, buff, count_r);
 				;
 			close(descriptors[0]);
+			free(buff);
 			return SUCSESS;
 		}
 	}
@@ -110,7 +115,6 @@ int speedtest (void)
 
 int main(int argc, char **argv)
 {
-	speedtest ();
+	speedtest();
 	return 0;
 }
-

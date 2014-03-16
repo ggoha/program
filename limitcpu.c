@@ -6,13 +6,16 @@
 #include <signal.h>
 #include <stdlib.h>
 
+#define ERARGUMENTS -4
 #define ERLIMIT -3
 #define ERFORK -2
 #define EREXEC -1
 #define SUCSESS 0
 
+//Коэфициент с которым программа спит/работает
 const int k=100;
 
+//Обработчик смерти сына
 void handler(int sign) 
 {
 		pid_t pid;
@@ -24,21 +27,23 @@ void handler(int sign)
 
 int cpulimit(int argc, char** argv, int lim)
 {
+
 	int pid=fork();
     switch (pid)
     {
 	case 0: 
     {
+
         if (execv(argv[2], argv+3)<0)
 		{
-			perror("exec one failed");
+			perror("exec one failed: ");
 			exit(EREXEC);
 		}
         exit(SUCSESS);
     }
     case -1:
 	{
-		perror("fork error");
+		perror("fork error: ");
 		exit (ERFORK);
 	}
 	default:
@@ -48,11 +53,11 @@ int cpulimit(int argc, char** argv, int lim)
 			kill(pid, SIGSTOP);
 			while (usleep((100-lim)*k)!=0)
 				if (errno != EINTR)
-					perror("usleep error");
+					perror("usleep error: ");
 			kill(pid, SIGCONT);
 			while (usleep((lim)*k)!=0)
 				if (errno != EINTR)
-					perror("usleep error");
+					perror("usleep error: ");
 //			write (1, "!", 1);
 		}
 	}
@@ -61,16 +66,25 @@ int cpulimit(int argc, char** argv, int lim)
 
 int main(int argc, char** argv)
  {
-	if (0 != signal(SIGCHLD, handler))
-		perror("signal SIGCHLD error");
+	//устанавливаем свою реакцию на сигналл
+	if (signal(SIGCHLD, handler)!=0)
+		perror("signal SIGCHLD error: ");
+	
+	//получаем коэфициент загрузки
 	char** endptr=NULL;
 	unsigned long lim = strtoul(argv[1], endptr, 10);
-	printf("%ld", lim);
 	if (endptr!=NULL)
 	{
-		write(2, "Eror limit", 10);
+		write(2, "Eror limit\n", sizeof("Eror limit\n"));
 		return ERLIMIT;
 	}
+	
+	if (argc<3)
+	{
+		write(2, "Too few argaments\n", sizeof("Too few argaments\n"));
+		return ERARGUMENTS;
+	}
+	
 	cpulimit(argc, argv, lim);
 	return 0;
 }

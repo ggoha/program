@@ -7,7 +7,13 @@
 #include <string.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
 
+#define SUCCESS 0
+#define EROPEN -1
+#define ERCLOSE -2
+#define ERREAD -3
 
 char* GetFullPatch(char* FullName, char* DirectoryName, struct dirent* Dirent) 
 {
@@ -69,7 +75,7 @@ void WriteInformation(char* NameOfDirectory, struct dirent* Dirent, int FlagOfDi
 	printf("%s ", getgrgid(inf.st_uid)->gr_name);
 	//Вывод размера
 	printf("%ld ", inf.st_size);
-	//Вывод размера
+	//Вывод времени
 	char* data = (char*)asctime(localtime(&inf.st_mtime));
 	data[strlen(data)-1] = '\0';
 	printf("%s ", data);
@@ -77,30 +83,28 @@ void WriteInformation(char* NameOfDirectory, struct dirent* Dirent, int FlagOfDi
 
 
 int CountDirectory(char* DirectoryName)
+//Подсчет колличества объектов в директории (total)
 {
   	DIR* directory = opendir(DirectoryName);
 	if (directory==NULL)
 	{
-		perror("Directory not be open");
-		return -1;
+		perror("Directory not be open: ");
+		return EROPEN;
 	}
   	struct dirent* Dirent;	
   	Dirent = readdir(directory);
 	int res = 0;
   	while (Dirent != NULL)
   	{
-		struct stat inf;
-		char* FullPath;
-		int size = (strlen(DirectoryName) + strlen(Dirent->d_name) + 1) * sizeof(char);
-		FullPath = malloc(size);
-		GetFullPatch(FullPath, DirectoryName, Dirent);
-		stat(FullPath, &inf);
-		free(FullPath);
-		res += inf.st_blocks; //?
+		++res;
 		Dirent = readdir(directory);
-
 	}
 	int closd = closedir(directory);
+	if (closd<0)
+	{
+		perror("Directory not be closed: ");
+		return ERCLOSE;
+	}
 	return res;
 }
 
@@ -111,8 +115,8 @@ int ShowDirectory(char* DirectoryName, int flag[2])
 	DIR* directory = opendir(DirectoryName);
 	if (directory==NULL)
 	{
-		perror("Directory not be open");
-		return -1;
+		perror("Directory not be open: ");
+		return EROPEN;
 	}
   	struct dirent* Dirent;
 
@@ -130,19 +134,19 @@ int ShowDirectory(char* DirectoryName, int flag[2])
 		}
 		Dirent = readdir(directory);
   	}
-	printf("\n\n");
+	printf("\n");
 	if (errno!=0)
 	{
-		perror("Directory not be read");
-		return -3;			
+		perror("Directory not be read: ");
+		return ERREAD;			
 	}
 	int closd = closedir(directory);
 	if (closd!=0)
 		{
-		perror("Directory not be closes");
-		return -2;
+		perror("Directory not be closed");
+		return ERCLOSE;
 		};
-	return 0;
+	return SUCCESS;
 }
 
 int ls(char* DirectoryName, int flag[2])
@@ -154,13 +158,13 @@ int ls(char* DirectoryName, int flag[2])
 		if (directory==NULL)
 		{
 			perror("Directory not be open");
-			return -1;
+			return EROPEN;
 		}
   		struct dirent* Dirent;
   		Dirent = readdir(directory);
   		while (Dirent != NULL)
 		{
-			if (Dirent->d_name[0] != '.') 
+			if (Dirent->d_name[0] != '.') //проверка на скрытость директории 
 			{
 				if (Dirent->d_type & DT_DIR) 
 				{	
@@ -178,17 +182,17 @@ int ls(char* DirectoryName, int flag[2])
 		}
 		if (errno!=0)
 		{
-			perror("Directory not be read");
-			return -3;			
+			perror("Directory not be read: ");
+			return ERREAD;			
 		}
 		int closd = closedir(directory);
 		if (closd!=0)
 			{
-			perror("Directory not be closes");
-			return -2;
+			perror("Directory not be closed: ");
+			return ERCLOSE;
 			}
 	}
-	return 0;
+	return SUCCESS;
 }
 
 int main (int argc, char *argv[])
@@ -196,7 +200,7 @@ int main (int argc, char *argv[])
 	
 	if (argc > 3) 
 	{
-		write(1, "Too much arguments\n", 19);
+		write(1, "Too much arguments\n", sizeof("Too much arguments\n"));
 	}
 	else
 	{
@@ -209,7 +213,6 @@ int main (int argc, char *argv[])
 				flag[1] = 1;
 		}
 		ls("./", flag);			
-		write(1, "\n", 1);	
 	}	
 	return 0;
 }

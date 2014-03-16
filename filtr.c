@@ -8,7 +8,7 @@
 #define ERARGUMENTS -1
 
 //Ошибки filtr
-#define SUCSESS 0
+#define SUCCESS 0
 #define ERFORK -1
 #define ERPIPE -2
 #define ERWAIT -3
@@ -21,7 +21,7 @@ int filtr(const char* command)
 	FILE* f = popen(command, "r");
 	if (f==NULL)
 	{
-		perror("Error of new process ");
+		perror("Error of new process: ");
 		return ERFORK;
 	}
 	
@@ -43,17 +43,17 @@ int filtr(const char* command)
 	
 	if (pclos<0)
 	{
-		perror("Error of clouse process ");
+		perror("Error of clouse process: ");
 		return ERWAIT;
 	}
-	return SUCSESS;
+	return SUCCESS;
 }
 
 int main(int argc, char** argv)
 {
 	if (argc<2)
 	{
-		write (2, "Too few arguments\n", 18);
+		write (2, "Too few arguments\n", sizeof("Too few arguments\n"));
 		return ERARGUMENTS;
 	}
 
@@ -76,4 +76,3 @@ int main(int argc, char** argv)
 	filtr(arguments);
 	return 0;
 }
-
