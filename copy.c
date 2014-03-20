@@ -190,7 +190,7 @@ int Copy(char* from, char* where, int flagR)
 	if (stat_from.st_mode & S_IFDIR) 
 	{
 		if (flagR)
-			if (!stat(where, &stat_where) && !(stat_from.st_mode & S_IFDIR))
+			if (!stat(where, &stat_where) && !(stat_where.st_mode & S_IFDIR))
 			{	
 				PrintError("Cann't get write into file directory", from);
 				return ERTYPES;
