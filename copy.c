@@ -73,7 +73,7 @@ int CopyDirDirRecursive(char* from, char* where)
 		PrintError("Cann't open directory", from);
 		return EROPENDIR;
 	}
-	struct stat stat_from, stat_where;
+	struct stat stat_from;
 	if (stat(from, &stat_from)) 
 	{	
 		PrintError("Cann't get status ", from);
@@ -118,7 +118,7 @@ int CopyDirDirRecursive(char* from, char* where)
 			free(from_new); 
 		}
 	}
-	//return 0;
+	return SUCCESS;
 }
 
 int CopyFileFile(char* from, char* where)
@@ -196,7 +196,10 @@ int Copy(char* from, char* where, int flagR)
 				return ERTYPES;
 			}
 			else
-				return CopyDirDirRecursive(from, where);
+				if (stat_from.st_ino==stat_where.st_ino)
+					return SUCCESS;
+				else
+					CopyDirDirRecursive(from, where);
 		else 
 		{
 			write(2, "Cann't copy non-recursive directory \n", 37);
@@ -211,6 +214,7 @@ int Copy(char* from, char* where, int flagR)
 			return CopyFileDir(from, where);
 			else return CopyFileFile (from, where);
 	}
+	return SUCCESS;
 }
 
 int main(int argc, char** argv)

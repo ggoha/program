@@ -27,7 +27,7 @@ char* GetFullPatch(char* FullName, char* DirectoryName, struct dirent* Dirent)
 void WriteRight(struct stat inf, int FlagOfDirectory)
 {
 	char right[11] = "----------\0";
-
+/*
 	if (FlagOfDirectory) 
 		right[0] = 'd';
 
@@ -51,7 +51,25 @@ void WriteRight(struct stat inf, int FlagOfDirectory)
 		right[8] = 'w';
 	if ( inf.st_mode & S_IXOTH ) 
 		right[9] = 'x';
-	
+*/
+	char buff[6];
+	sprintf(buff, "%6o", inf.st_mode);
+
+	if (buff[0]==' ' && buff[1]=='4')
+		right[0]='d';
+	int i= 3;
+	for (;i<6; ++i)
+	{
+		int res = buff[i]-'0';
+		if (res%2==1)
+			right[(i-3)*3+3]='x';
+		res/=2;
+		if (res%2==1)
+			right[(i-3)*3+2]='w';
+		res/=2;
+		if (res%2==1)
+			right[(i-3)*3+1]='r';
+	}
 	printf("%s ", right);
 }
 
@@ -69,10 +87,16 @@ void WriteInformation(char* NameOfDirectory, struct dirent* Dirent, int FlagOfDi
 	WriteRight(inf, FlagOfDirectory);	
 	//Вывод количества hard-ссылок на объект 
 	printf("%d ", inf.st_nlink);
-	//Вывод пользователя	
-	printf("%s ", getpwuid(inf.st_uid)->pw_name);
+	//Вывод пользователя
+	if (getpwuid(inf.st_uid)->pw_name==NULL)
+		printf("%d ", inf.st_uid);
+	else
+		printf("%s ", getpwuid(inf.st_uid)->pw_name);
 	//Вывод группы
-	printf("%s ", getgrgid(inf.st_uid)->gr_name);
+	if (getgrgid(inf.st_uid)->gr_name==NULL)
+		printf("%d ", inf.st_uid);
+	else
+		printf("%s ", getgrgid(inf.st_uid)->gr_name);
 	//Вывод размера
 	printf("%ld ", inf.st_size);
 	//Вывод времени
