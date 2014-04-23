@@ -8,6 +8,12 @@
 #include <gmpxx.h>
 #include <queue>
 
+//Возвращаемые значения
+#define ERTHREAD -1
+#define ERARGUMENT -2
+#define ERMUTEX -3
+
+
 struct data
 {
 	mpz_t A, g, p;
@@ -24,8 +30,16 @@ struct thread_queue
 	pthread_cond_t cond;
 	thread_queue()
 	{
-		pthread_mutex_init(&lock, NULL);
-		pthread_cond_init(&cond, NULL);
+		if (pthread_mutex_init(&lock, NULL)<0)
+		{
+			printf("Eroror mutex initialization");
+			exit(ERMUTEX);
+		}
+		if (pthread_cond_init(&cond, NULL)<0)
+		{
+			printf("Eroror cond initialization");
+			exit(ERMUTEX);
+		}
 	}
 	void push(struct data d)
 	{
@@ -78,25 +92,21 @@ void work(void* arg)
 	while (1)
 	{
 		struct data d = q->pop();
-/*		printf("Начал обрабатывать ");
-		mpz_out_str(stdout, 10, d.g);
-		printf(" ");
-		mpz_out_str(stdout, 10, d.p);
-		printf(" ");
-		mpz_out_str(stdout, 10, d.A);
-		printf("\n");
-		fflush(stdout);
-*/		find_diskret_log(d);
+//		printf("Начал обрабатывать ");
+//		mpz_out_str(stdout, 10, d.g);
+//		printf(" ");
+//		mpz_out_str(stdout, 10, d.p);
+//		printf(" ");
+//		mpz_out_str(stdout, 10, d.A);
+//		printf("\n");
+//		fflush(stdout);
+		find_diskret_log(d);
 	}
 }
 
 #define MAXSIZE_base 1024
 #define MAXSIZE_mod 1024
 #define MAXSIZE_answer 1024
-
-//Возвращаемые значения
-#define ERTHREAD -1
-#define ERARGUMENT -2
 
 
 int main (int argc, char** argv)
@@ -130,7 +140,7 @@ int main (int argc, char** argv)
 			for (int j=0; j<i; ++j)
 				pthread_kill(workers_thread[i], SIGKILL);
 			return ERTHREAD;
-		}		
+		}
 	while (1)
 	{
 		scanf("%1024s %1024s %1024s", &gs, &ps, &As);
